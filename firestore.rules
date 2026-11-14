@@ -1,0 +1,299 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global default-deny safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidTimestamp(ts) {
+      return ts is timestamp && ts <= request.time;
+    }
+
+    function isValidUserProfile(data, userId) {
+      return data.userId == userId &&
+             data.displayName is string && data.displayName.size() >= 1 && data.displayName.size() <= 80 &&
+             data.email is string && data.email.size() <= 120 &&
+             data.phone is string && data.phone.size() <= 20 &&
+             isValidTimestamp(data.createdAt) &&
+             isValidTimestamp(data.updatedAt);
+    }
+
+    function isValidDeliveryAddress(data, userId) {
+      return data.userId == userId &&
+             data.label is string && data.label.size() >= 1 && data.label.size() <= 30 &&
+             data.recipientName is string && data.recipientName.size() >= 1 && data.recipientName.size() <= 80 &&
+             data.phone is string && data.phone.size() >= 5 && data.phone.size() <= 20 &&
+             data.streetAddress is string && data.streetAddress.size() >= 3 && data.streetAddress.size() <= 200 &&
+             data.city is string && data.city.size() >= 1 && data.city.size() <= 60 &&
+             data.pincode is string && data.pincode.size() >= 4 && data.pincode.size() <= 12 &&
+             data.latitude is number && data.latitude >= -90.0 && data.latitude <= 90.0 &&
+             data.longitude is number && data.longitude >= -180.0 && data.longitude <= 180.0 &&
+             data.isDefault is bool &&
+             isValidTimestamp(data.createdAt) &&
+             isValidTimestamp(data.updatedAt);
+    }
+
+    function isValidCartItem(data, userId) {
+      return data.userId == userId &&
+             data.productId is string && data.productId.size() >= 1 && data.productId.size() <= 64 &&
+             data.title is string && data.title.size() >= 1 && data.title.size() <= 120 &&
+             data.brand is string && data.brand.size() >= 1 && data.brand.size() <= 60 &&
+             data.category is string && data.category.size() >= 1 && data.category.size() <= 40 &&
+             data.price is int && data.price > 0 && data.price <= 10000000 &&
+             data.mrp is int && data.mrp >= data.price && data.mrp <= 10000000 &&
+             data.quantity is int && data.quantity >= 1 && data.quantity <= 20 &&
+             data.imageKey is string && data.imageKey.size() >= 1 && data.imageKey.size() <= 64 &&
+             isValidTimestamp(data.createdAt) &&
+             isValidTimestamp(data.updatedAt);
+    }
+
+    function isValidWishlistItem(data, userId) {
+      return data.userId == userId &&
+             data.productId is string && data.productId.size() >= 1 && data.productId.size() <= 64 &&
+             data.title is string && data.title.size() >= 1 && data.title.size() <= 120 &&
+             data.brand is string && data.brand.size() >= 1 && data.brand.size() <= 60 &&
+             data.category is string && data.category.size() >= 1 && data.category.size() <= 40 &&
+             data.price is int && data.price > 0 && data.price <= 10000000 &&
+             data.mrp is int && data.mrp >= data.price && data.mrp <= 10000000 &&
+             data.rating is number && data.rating >= 0.0 && data.rating <= 5.0 &&
+             data.imageKey is string && data.imageKey.size() >= 1 && data.imageKey.size() <= 64 &&
+             isValidTimestamp(data.createdAt) &&
+             isValidTimestamp(data.updatedAt);
+    }
+
+    function isValidOrderRecord(data, userId) {
+      return data.userId == userId &&
+             data.orderNumber is string && data.orderNumber.size() >= 3 && data.orderNumber.size() <= 32 &&
+             data.customerName is string && data.customerName.size() >= 1 && data.customerName.size() <= 80 &&
+             data.customerPhone is string && data.customerPhone.size() >= 5 && data.customerPhone.size() <= 20 &&
+             data.deliveryAddress is string && data.deliveryAddress.size() >= 3 && data.deliveryAddress.size() <= 250 &&
+             data.deliveryCity is string && data.deliveryCity.size() >= 1 && data.deliveryCity.size() <= 60 &&
+             data.deliveryPincode is string && data.deliveryPincode.size() >= 4 && data.deliveryPincode.size() <= 12 &&
+             data.deliveryLat is number && data.deliveryLat >= -90.0 && data.deliveryLat <= 90.0 &&
+             data.deliveryLng is number && data.deliveryLng >= -180.0 && data.deliveryLng <= 180.0 &&
+             data.hubLat is number && data.hubLat >= -90.0 && data.hubLat <= 90.0 &&
+             data.hubLng is number && data.hubLng >= -180.0 && data.hubLng <= 180.0 &&
+             data.paymentMethod in ['UPI', 'CARD', 'COD'] &&
+             data.deliverySpeed in ['STANDARD', 'EXPRESS'] &&
+             data.couponCode is string && data.couponCode.size() <= 24 &&
+             data.subtotal is int && data.subtotal >= 0 && data.subtotal <= 50000000 &&
+             data.discount is int && data.discount >= 0 && data.discount <= data.subtotal &&
+             data.deliveryFee is int && data.deliveryFee >= 0 && data.deliveryFee <= 5000 &&
+             data.totalAmount is int && data.totalAmount > 0 && data.totalAmount <= 50000000 &&
+             data.status in ['PLACED', 'PACKED', 'SHIPPED', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED'] &&
+             data.itemsSummary is string && data.itemsSummary.size() >= 1 && data.itemsSummary.size() <= 300 &&
+             data.itemTitles is list && data.itemTitles.size() <= 25 &&
+             (data.itemTitles.size() == 0 || (data.itemTitles[0] is string && data.itemTitles[0].size() <= 120)) &&
+             data.itemCount is int && data.itemCount >= 1 && data.itemCount <= 100 &&
+             isValidTimestamp(data.createdAt) &&
+             isValidTimestamp(data.updatedAt);
+    }
+
+    function isValidOrderLineItem(data, userId, orderId) {
+      return data.userId == userId &&
+             data.orderId == orderId &&
+             data.productId is string && data.productId.size() >= 1 && data.productId.size() <= 64 &&
+             data.title is string && data.title.size() >= 1 && data.title.size() <= 120 &&
+             data.brand is string && data.brand.size() >= 1 && data.brand.size() <= 60 &&
+             data.price is int && data.price > 0 && data.price <= 10000000 &&
+             data.mrp is int && data.mrp >= data.price && data.mrp <= 10000000 &&
+             data.quantity is int && data.quantity >= 1 && data.quantity <= 20 &&
+             data.imageKey is string && data.imageKey.size() >= 1 && data.imageKey.size() <= 64 &&
+             isValidTimestamp(data.createdAt);
+    }
+
+    function isValidProduct(data, userId) {
+      return data.userId == userId &&
+             data.title is string && data.title.size() >= 2 && data.title.size() <= 120 &&
+             data.brand is string && data.brand.size() >= 1 && data.brand.size() <= 60 &&
+             data.categoryName is string && data.categoryName.size() >= 1 && data.categoryName.size() <= 40 &&
+             data.price is int && data.price > 0 && data.price <= 10000000 &&
+             data.mrp is int && data.mrp >= data.price && data.mrp <= 10000000 &&
+             data.rating is number && data.rating >= 0.0 && data.rating <= 5.0 &&
+             data.reviewCount is int && data.reviewCount >= 0 && data.reviewCount <= 10000000 &&
+             data.highlights is list && data.highlights.size() <= 10 &&
+             (data.highlights.size() == 0 || (data.highlights[0] is string && data.highlights[0].size() <= 160)) &&
+             data.description is string && data.description.size() <= 500 &&
+             data.badge is string && data.badge.size() <= 32 &&
+             data.imageKey is string && data.imageKey.size() >= 1 && data.imageKey.size() <= 64 &&
+             (!('photoBase64' in data) || (data.photoBase64 is string && data.photoBase64.size() <= 250000)) &&
+             data.deliveryDays is int && data.deliveryDays >= 0 && data.deliveryDays <= 60 &&
+             data.inStock is bool &&
+             data.sellerListed is bool &&
+             isValidTimestamp(data.createdAt) &&
+             isValidTimestamp(data.updatedAt);
+    }
+
+    function isValidCustomProduct(data, userId) {
+      return data.userId == userId &&
+             data.title is string && data.title.size() >= 2 && data.title.size() <= 120 &&
+             data.brand is string && data.brand.size() >= 1 && data.brand.size() <= 60 &&
+             data.category is string && data.category.size() >= 1 && data.category.size() <= 40 &&
+             data.price is int && data.price > 0 && data.price <= 10000000 &&
+             data.mrp is int && data.mrp >= data.price && data.mrp <= 10000000 &&
+             data.description is string && data.description.size() >= 1 && data.description.size() <= 500 &&
+             data.badge is string && data.badge.size() <= 32 &&
+             data.inStock is bool &&
+             isValidTimestamp(data.createdAt) &&
+             isValidTimestamp(data.updatedAt);
+    }
+
+    match /users/{userId} {
+      allow get: if isOwner(userId) && isValidId(userId);
+      allow list: if false;
+      allow create: if isOwner(userId) &&
+                       isValidId(userId) &&
+                       incoming().keys().hasAll(['userId', 'displayName', 'email', 'phone', 'createdAt', 'updatedAt']) &&
+                       incoming().keys().hasOnly(['userId', 'displayName', 'email', 'phone', 'createdAt', 'updatedAt']) &&
+                       isValidUserProfile(incoming(), userId);
+      allow update: if isOwner(userId) &&
+                       isValidId(userId) &&
+                       isValidUserProfile(incoming(), userId) &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'email', 'phone', 'updatedAt']);
+      allow delete: if false;
+
+      match /addresses/{addressId} {
+        allow get: if isOwner(userId) && isValidId(addressId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) &&
+                         isValidId(addressId) &&
+                         incoming().keys().hasAll(['userId', 'label', 'recipientName', 'phone', 'streetAddress', 'city', 'pincode', 'latitude', 'longitude', 'isDefault', 'createdAt', 'updatedAt']) &&
+                         incoming().keys().hasOnly(['userId', 'label', 'recipientName', 'phone', 'streetAddress', 'city', 'pincode', 'latitude', 'longitude', 'isDefault', 'createdAt', 'updatedAt']) &&
+                         isValidDeliveryAddress(incoming(), userId);
+        allow update: if isOwner(userId) &&
+                         isValidId(addressId) &&
+                         isValidDeliveryAddress(incoming(), userId) &&
+                         incoming().userId == existing().userId &&
+                         incoming().createdAt == existing().createdAt &&
+                         incoming().diff(existing()).affectedKeys().hasOnly(['label', 'recipientName', 'phone', 'streetAddress', 'city', 'pincode', 'latitude', 'longitude', 'isDefault', 'updatedAt']);
+        allow delete: if isOwner(userId) && isValidId(addressId);
+      }
+
+      match /cart/{cartItemId} {
+        allow get: if isOwner(userId) && isValidId(cartItemId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) &&
+                         isValidId(cartItemId) &&
+                         incoming().keys().hasAll(['userId', 'productId', 'title', 'brand', 'category', 'price', 'mrp', 'quantity', 'imageKey', 'createdAt', 'updatedAt']) &&
+                         incoming().keys().hasOnly(['userId', 'productId', 'title', 'brand', 'category', 'price', 'mrp', 'quantity', 'imageKey', 'createdAt', 'updatedAt']) &&
+                         isValidCartItem(incoming(), userId);
+        allow update: if isOwner(userId) &&
+                         isValidId(cartItemId) &&
+                         isValidCartItem(incoming(), userId) &&
+                         incoming().userId == existing().userId &&
+                         incoming().productId == existing().productId &&
+                         incoming().createdAt == existing().createdAt &&
+                         incoming().diff(existing()).affectedKeys().hasOnly(['quantity', 'price', 'mrp', 'updatedAt']);
+        allow delete: if isOwner(userId) && isValidId(cartItemId);
+      }
+
+      match /wishlist/{wishlistItemId} {
+        allow get: if isOwner(userId) && isValidId(wishlistItemId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) &&
+                         isValidId(wishlistItemId) &&
+                         incoming().keys().hasAll(['userId', 'productId', 'title', 'brand', 'category', 'price', 'mrp', 'rating', 'imageKey', 'createdAt', 'updatedAt']) &&
+                         incoming().keys().hasOnly(['userId', 'productId', 'title', 'brand', 'category', 'price', 'mrp', 'rating', 'imageKey', 'createdAt', 'updatedAt']) &&
+                         isValidWishlistItem(incoming(), userId);
+        allow update: if isOwner(userId) &&
+                         isValidId(wishlistItemId) &&
+                         isValidWishlistItem(incoming(), userId) &&
+                         incoming().userId == existing().userId &&
+                         incoming().productId == existing().productId &&
+                         incoming().createdAt == existing().createdAt &&
+                         incoming().diff(existing()).affectedKeys().hasOnly(['price', 'mrp', 'rating', 'updatedAt']);
+        allow delete: if isOwner(userId) && isValidId(wishlistItemId);
+      }
+
+      match /orders/{orderId} {
+        allow get: if isOwner(userId) && isValidId(orderId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) &&
+                         isValidId(orderId) &&
+                         incoming().keys().hasAll(['userId', 'orderNumber', 'customerName', 'customerPhone', 'deliveryAddress', 'deliveryCity', 'deliveryPincode', 'deliveryLat', 'deliveryLng', 'hubLat', 'hubLng', 'paymentMethod', 'deliverySpeed', 'couponCode', 'subtotal', 'discount', 'deliveryFee', 'totalAmount', 'status', 'itemsSummary', 'itemTitles', 'itemCount', 'createdAt', 'updatedAt']) &&
+                         incoming().keys().hasOnly(['userId', 'orderNumber', 'customerName', 'customerPhone', 'deliveryAddress', 'deliveryCity', 'deliveryPincode', 'deliveryLat', 'deliveryLng', 'hubLat', 'hubLng', 'paymentMethod', 'deliverySpeed', 'couponCode', 'subtotal', 'discount', 'deliveryFee', 'totalAmount', 'status', 'itemsSummary', 'itemTitles', 'itemCount', 'createdAt', 'updatedAt']) &&
+                         incoming().status == 'PLACED' &&
+                         isValidOrderRecord(incoming(), userId);
+        allow update: if isOwner(userId) &&
+                         isValidId(orderId) &&
+                         isValidOrderRecord(incoming(), userId) &&
+                         incoming().userId == existing().userId &&
+                         incoming().orderNumber == existing().orderNumber &&
+                         incoming().createdAt == existing().createdAt &&
+                         !(existing().status in ['DELIVERED', 'CANCELLED']) &&
+                         incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt']);
+        allow delete: if false;
+
+        match /items/{lineItemId} {
+          allow get: if isOwner(userId) && isValidId(orderId) && isValidId(lineItemId);
+          allow list: if isOwner(userId) && isValidId(orderId);
+          allow create: if isOwner(userId) &&
+                           isValidId(orderId) &&
+                           isValidId(lineItemId) &&
+                           incoming().keys().hasAll(['userId', 'orderId', 'productId', 'title', 'brand', 'price', 'mrp', 'quantity', 'imageKey', 'createdAt']) &&
+                           incoming().keys().hasOnly(['userId', 'orderId', 'productId', 'title', 'brand', 'price', 'mrp', 'quantity', 'imageKey', 'createdAt']) &&
+                           isValidOrderLineItem(incoming(), userId, orderId) &&
+                           existsAfter(/databases/$(database)/documents/users/$(userId)/orders/$(orderId));
+          allow update, delete: if false;
+        }
+      }
+
+      match /products/{productId} {
+        allow get: if isOwner(userId) && isValidId(productId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) &&
+                         isValidId(productId) &&
+                         incoming().keys().hasAll(['userId', 'title', 'brand', 'categoryName', 'price', 'mrp', 'rating', 'reviewCount', 'highlights', 'description', 'badge', 'imageKey', 'deliveryDays', 'inStock', 'sellerListed', 'createdAt', 'updatedAt']) &&
+                         incoming().keys().hasOnly(['userId', 'title', 'brand', 'categoryName', 'price', 'mrp', 'rating', 'reviewCount', 'highlights', 'description', 'badge', 'imageKey', 'photoBase64', 'deliveryDays', 'inStock', 'sellerListed', 'createdAt', 'updatedAt']) &&
+                         isValidProduct(incoming(), userId);
+        allow update: if isOwner(userId) &&
+                         isValidId(productId) &&
+                         isValidProduct(incoming(), userId) &&
+                         incoming().userId == existing().userId &&
+                         incoming().createdAt == existing().createdAt &&
+                         incoming().diff(existing()).affectedKeys().hasOnly(['title', 'brand', 'categoryName', 'price', 'mrp', 'rating', 'reviewCount', 'highlights', 'description', 'badge', 'imageKey', 'photoBase64', 'deliveryDays', 'inStock', 'sellerListed', 'updatedAt']);
+        allow delete: if isOwner(userId) && isValidId(productId);
+      }
+
+      match /custom_products/{productId} {
+        allow get: if isOwner(userId) && isValidId(productId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) &&
+                         isValidId(productId) &&
+                         incoming().keys().hasAll(['userId', 'title', 'brand', 'category', 'price', 'mrp', 'description', 'badge', 'inStock', 'createdAt', 'updatedAt']) &&
+                         incoming().keys().hasOnly(['userId', 'title', 'brand', 'category', 'price', 'mrp', 'description', 'badge', 'inStock', 'createdAt', 'updatedAt']) &&
+                         isValidCustomProduct(incoming(), userId);
+        allow update: if isOwner(userId) &&
+                         isValidId(productId) &&
+                         isValidCustomProduct(incoming(), userId) &&
+                         incoming().userId == existing().userId &&
+                         incoming().createdAt == existing().createdAt &&
+                         incoming().diff(existing()).affectedKeys().hasOnly(['title', 'brand', 'category', 'price', 'mrp', 'description', 'badge', 'inStock', 'updatedAt']);
+        allow delete: if isOwner(userId) && isValidId(productId);
+      }
+    }
+  }
+}

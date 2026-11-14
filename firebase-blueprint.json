@@ -1,0 +1,233 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Authenticated customer profile and contact metadata.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Firebase Auth UID of the user." },
+        "displayName": { "type": "string", "description": "Customer display name." },
+        "email": { "type": "string", "description": "Customer email address." },
+        "phone": { "type": "string", "description": "Customer phone number." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Server timestamp on creation." },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Server timestamp on update." }
+      },
+      "required": ["userId", "displayName", "email", "phone", "createdAt", "updatedAt"]
+    },
+    "DeliveryAddress": {
+      "title": "DeliveryAddress",
+      "description": "Customer saved delivery address with Google Maps coordinates.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "label": { "type": "string" },
+        "recipientName": { "type": "string" },
+        "phone": { "type": "string" },
+        "streetAddress": { "type": "string" },
+        "city": { "type": "string" },
+        "pincode": { "type": "string" },
+        "latitude": { "type": "number" },
+        "longitude": { "type": "number" },
+        "isDefault": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "userId", "label", "recipientName", "phone", "streetAddress",
+        "city", "pincode", "latitude", "longitude", "isDefault", "createdAt", "updatedAt"
+      ]
+    },
+    "CartItem": {
+      "title": "CartItem",
+      "description": "Item in the authenticated user's shopping cart.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "productId": { "type": "string" },
+        "title": { "type": "string" },
+        "brand": { "type": "string" },
+        "category": { "type": "string" },
+        "price": { "type": "integer" },
+        "mrp": { "type": "integer" },
+        "quantity": { "type": "integer" },
+        "imageKey": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "userId", "productId", "title", "brand", "category",
+        "price", "mrp", "quantity", "imageKey", "createdAt", "updatedAt"
+      ]
+    },
+    "WishlistItem": {
+      "title": "WishlistItem",
+      "description": "Saved wishlist product for the authenticated user.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "productId": { "type": "string" },
+        "title": { "type": "string" },
+        "brand": { "type": "string" },
+        "category": { "type": "string" },
+        "price": { "type": "integer" },
+        "mrp": { "type": "integer" },
+        "rating": { "type": "number" },
+        "imageKey": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "userId", "productId", "title", "brand", "category",
+        "price", "mrp", "rating", "imageKey", "createdAt", "updatedAt"
+      ]
+    },
+    "OrderRecord": {
+      "title": "OrderRecord",
+      "description": "Customer order with pricing summary, delivery coordinates, and tracking status.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "orderNumber": { "type": "string" },
+        "customerName": { "type": "string" },
+        "customerPhone": { "type": "string" },
+        "deliveryAddress": { "type": "string" },
+        "deliveryCity": { "type": "string" },
+        "deliveryPincode": { "type": "string" },
+        "deliveryLat": { "type": "number" },
+        "deliveryLng": { "type": "number" },
+        "hubLat": { "type": "number" },
+        "hubLng": { "type": "number" },
+        "paymentMethod": { "type": "string", "enum": ["UPI", "CARD", "COD"] },
+        "deliverySpeed": { "type": "string", "enum": ["STANDARD", "EXPRESS"] },
+        "couponCode": { "type": "string" },
+        "subtotal": { "type": "integer" },
+        "discount": { "type": "integer" },
+        "deliveryFee": { "type": "integer" },
+        "totalAmount": { "type": "integer" },
+        "status": {
+          "type": "string",
+          "enum": ["PLACED", "PACKED", "SHIPPED", "OUT_FOR_DELIVERY", "DELIVERED", "CANCELLED"]
+        },
+        "itemsSummary": { "type": "string" },
+        "itemTitles": { "type": "array" },
+        "itemCount": { "type": "integer" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "userId", "orderNumber", "customerName", "customerPhone", "deliveryAddress",
+        "deliveryCity", "deliveryPincode", "deliveryLat", "deliveryLng", "hubLat", "hubLng",
+        "paymentMethod", "deliverySpeed", "couponCode", "subtotal", "discount",
+        "deliveryFee", "totalAmount", "status", "itemsSummary", "itemTitles", "itemCount",
+        "createdAt", "updatedAt"
+      ]
+    },
+    "OrderLineItem": {
+      "title": "OrderLineItem",
+      "description": "Immutable line item belonging to a customer order.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "orderId": { "type": "string" },
+        "productId": { "type": "string" },
+        "title": { "type": "string" },
+        "brand": { "type": "string" },
+        "price": { "type": "integer" },
+        "mrp": { "type": "integer" },
+        "quantity": { "type": "integer" },
+        "imageKey": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "userId", "orderId", "productId", "title", "brand",
+        "price", "mrp", "quantity", "imageKey", "createdAt"
+      ]
+    },
+    "Product": {
+      "title": "Product",
+      "description": "Shopping catalog product stored in Firestore under the user's store products collection.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Firebase Auth UID of the owner." },
+        "title": { "type": "string" },
+        "brand": { "type": "string" },
+        "categoryName": { "type": "string" },
+        "price": { "type": "integer" },
+        "mrp": { "type": "integer" },
+        "rating": { "type": "number" },
+        "reviewCount": { "type": "integer" },
+        "highlights": { "type": "array" },
+        "description": { "type": "string" },
+        "badge": { "type": "string" },
+        "imageKey": { "type": "string" },
+        "photoBase64": { "type": "string", "description": "Optional compressed product JPEG photo encoded as Base64." },
+        "deliveryDays": { "type": "integer" },
+        "inStock": { "type": "boolean" },
+        "sellerListed": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "userId", "title", "brand", "categoryName", "price", "mrp",
+        "rating", "reviewCount", "highlights", "description", "badge",
+        "imageKey", "deliveryDays", "inStock", "sellerListed", "createdAt", "updatedAt"
+      ]
+    },
+    "CustomProduct": {
+      "title": "CustomProduct",
+      "description": "Merchant-listed custom store product added via Seller Desk.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "title": { "type": "string" },
+        "brand": { "type": "string" },
+        "category": { "type": "string" },
+        "price": { "type": "integer" },
+        "mrp": { "type": "integer" },
+        "description": { "type": "string" },
+        "badge": { "type": "string" },
+        "inStock": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": [
+        "userId", "title", "brand", "category", "price", "mrp",
+        "description", "badge", "inStock", "createdAt", "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Customer profile document."
+    },
+    "/users/{userId}/addresses/{addressId}": {
+      "schema": { "$ref": "#/entities/DeliveryAddress" },
+      "description": "Saved delivery addresses with Google Maps coordinates."
+    },
+    "/users/{userId}/cart/{cartItemId}": {
+      "schema": { "$ref": "#/entities/CartItem" },
+      "description": "Customer shopping cart items."
+    },
+    "/users/{userId}/wishlist/{wishlistItemId}": {
+      "schema": { "$ref": "#/entities/WishlistItem" },
+      "description": "Customer saved wishlist products."
+    },
+    "/users/{userId}/orders/{orderId}": {
+      "schema": { "$ref": "#/entities/OrderRecord" },
+      "description": "Customer placed orders and live delivery tracking state."
+    },
+    "/users/{userId}/orders/{orderId}/items/{lineItemId}": {
+      "schema": { "$ref": "#/entities/OrderLineItem" },
+      "description": "Immutable line items inside a customer order."
+    },
+    "/users/{userId}/products/{productId}": {
+      "schema": { "$ref": "#/entities/Product" },
+      "description": "Shopping catalog products fetched from Firestore and displayed in the grid."
+    },
+    "/users/{userId}/custom_products/{productId}": {
+      "schema": { "$ref": "#/entities/CustomProduct" },
+      "description": "Custom store catalog items listed in Seller Desk."
+    }
+  }
+}
